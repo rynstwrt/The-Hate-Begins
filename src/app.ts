@@ -105,6 +105,8 @@ class App
         });
 
         const light1: HemisphericLight = new HemisphericLight("light1", new Vector3(1, 1, 0), this.scene);
+        light1.diffuse = new Color3(1, 0, 0);
+
         this.createGround();
 
         this.engine.runRenderLoop(() =>
@@ -146,8 +148,8 @@ class App
         const ground = MeshBuilder.CreateGround("ground", {width: this.groundWidth, height: this.groundHeight}, this.scene);
         ground.checkCollisions = true;
 
-        const groundMat = new StandardMaterial("groundMat");
-        groundMat.diffuseTexture = new Texture("assets/ground.jpg");
+        const groundMat = new StandardMaterial("groundMat", this.scene);
+        groundMat.diffuseTexture = new Texture("../assets/ground.jpg");
         ground.material = groundMat;
     }
 }

@@ -1,0 +1,47 @@
+@keyframes background {
+  to {
+    border-radius: 50%;
+    transform: scale(0);
+  }
+}
+* {
+  margin: 0;
+  padding: 0;
+  border: none;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: black;
+}
+
+#background {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  z-index: -1;
+}
+#background .background-square {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: content-box;
+}
+#background .background-square .background-square-content {
+  background-color: red;
+  width: 100%;
+  height: 100%;
+  animation: background 0.5s linear infinite alternate;
+}
+
+/*# sourceMappingURL=main.css.map */

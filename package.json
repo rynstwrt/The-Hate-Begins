@@ -1,5 +1,5 @@
 {
-  "name": "lasers",
+  "name": "The Hate Begins",
   "version": "1.0.0",
   "description": "A game created with Babylon.JS",
   "main": "index.js",
@@ -18,5 +18,8 @@
     "webpack": "^5.82.1",
     "webpack-cli": "^5.1.1",
     "webpack-dev-server": "^4.15.0"
+  },
+  "dependencies": {
+    "animejs": "^3.2.1"
   }
 }

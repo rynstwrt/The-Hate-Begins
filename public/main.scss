@@ -1,15 +1,6 @@
 $color1: black;
 $color2: red;
 
-@keyframes background
-{
-    to
-    {
-        border-radius: 50%;
-        transform: scale(0);
-    }
-}
-
 *
 {
     margin: 0;
@@ -26,6 +17,13 @@ html, body
 body
 {
     background-color: $color1;
+}
+
+#game-canvas
+{
+    width: 100%;
+    height: 100%;
+    touch-action: none;
 }
 
 #background
@@ -46,14 +44,24 @@ body
         display: flex;
         justify-content: center;
         align-items: center;
-        box-sizing: content-box;
+        border: 3px solid black;
 
         .background-square-content
         {
-            background-color: red;
+            background-color: $color2;
             width: 100%;
             height: 100%;
-            animation: background .5s linear infinite alternate;
         }
+    }
+
+    &::after
+    {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        //background-color: rgba(0, 0, 0, .5);
     }
 }

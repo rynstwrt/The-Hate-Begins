@@ -1,9 +1,3 @@
-@keyframes background {
-  to {
-    border-radius: 50%;
-    transform: scale(0);
-  }
-}
 * {
   margin: 0;
   padding: 0;
@@ -17,6 +11,12 @@ html, body {
 
 body {
   background-color: black;
+}
+
+#game-canvas {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
 }
 
 #background {
@@ -35,13 +35,20 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  box-sizing: content-box;
+  border: 3px solid black;
 }
 #background .background-square .background-square-content {
   background-color: red;
   width: 100%;
   height: 100%;
-  animation: background 0.5s linear infinite alternate;
+}
+#background::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
 }
 
 /*# sourceMappingURL=main.css.map */

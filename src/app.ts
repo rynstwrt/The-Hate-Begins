@@ -12,7 +12,7 @@ import {
     StandardMaterial,
     Color3,
     Texture,
-    ShadowGenerator, SpotLight
+    ShadowGenerator, SpotLight, Vector4, VertexBuffer, Mesh
 } from "@babylonjs/core";
 import anime from "animejs/lib/anime.es.js"
 
@@ -23,26 +23,23 @@ class App
     readonly backgroundSquaresY = 50;
 
     // Building constants
-    readonly minNumBuildings = 1;
+    readonly minNumBuildings = 3;
     readonly maxNumBuildings = 25;
-    readonly minBuildingWidth = 2;
-    readonly maxBuildingWidth = 5;
-    readonly minBuildingHeight = 10;
-    readonly maxBuildingHeight = 75;
-    readonly buildingUScale = 2;
-    readonly buildingVScale = 10;
+    readonly minBuildingWidth = 4;
+    readonly maxBuildingWidth = 10;
+    readonly minBuildingHeight = 7;
+    readonly maxBuildingHeight = 30;
+    readonly buildingTileSize = 3.5;
 
     // Ground constants
-    readonly groundWidth = 300;
-    readonly groundHeight = 300;
-    readonly groundUScale = 150;
-    readonly groundVScale = 150;
+    readonly groundWidth = 500;
+    readonly groundDepth = 500;
+    readonly groundTileSubdivisions = Math.min(this.groundWidth * 0.3, this.groundDepth * 0.3);
 
     // Wall constants
     readonly wallThickness = 3;
     readonly wallHeight = 10;
-    readonly wallUScale = 2;
-    readonly wallVScale = 45;
+    readonly wallTileSize = 2.5
 
     // Class variables
     scene: Scene;
@@ -217,104 +214,95 @@ class App
 
     createGround()
     {
-        const ground = MeshBuilder.CreateGround("ground", {
-            width: this.groundWidth,
-            height: this.groundHeight
-        }, this.scene);
+        const halfX = this.groundWidth / 2;
+        const halfZ = this.groundDepth / 2;
+        const groundOptions = {
+            xmin: -halfX,
+            xmax: halfX,
+            zmin: -halfZ,
+            zmax: halfZ,
+            tileSize: 1,
+            subdivisions: {w: this.groundTileSubdivisions, h: this.groundTileSubdivisions}
+        };
+
+        const ground = MeshBuilder.CreateTiledGround("ground", groundOptions, this.scene);
         ground.checkCollisions = true;
         ground.receiveShadows = true;
 
         const groundMat = new StandardMaterial("groundMat", this.scene);
-        groundMat.backFaceCulling = false;
-
-        const bumpTexture = new Texture("assets/textures/normals/normalground.png");
-        bumpTexture.uScale = this.groundUScale;
-        bumpTexture.vScale = this.groundVScale;
-
-        const texture = new Texture("assets/textures/ground.jpg");
-        texture.uScale = this.groundUScale;
-        texture.vScale = this.groundVScale;
-        groundMat.diffuseTexture = texture;
-        groundMat.bumpTexture = bumpTexture;
-
+        groundMat.diffuseTexture = new Texture("assets/textures/ground.jpg");
+        groundMat.bumpTexture = new Texture("assets/textures/normals/normalground.png");
         ground.material = groundMat;
     }
 
     createWalls()
     {
         const wallMat = new StandardMaterial("wallMat", this.scene);
+        wallMat.diffuseTexture = new Texture("assets/textures/wall.jpg");;
+        wallMat.bumpTexture = new Texture("assets/textures/normals/normalwall.png");;
 
-        const wallTexture = new Texture("assets/textures/wall.jpg");
-        wallTexture.uScale = this.wallUScale;
-        wallTexture.vScale = this.wallVScale;
-        wallMat.diffuseTexture = wallTexture;
-
-        const wallBumpTexture = new Texture("assets/textures/normals/normalwall.png");
-        wallBumpTexture.uScale = this.wallUScale;
-        wallBumpTexture.vScale = this.wallVScale;
-        wallMat.bumpTexture = wallBumpTexture;
+        const wallOptions = {
+            sideOrientation: Mesh.DOUBLESIDE,
+            pattern: Mesh.FLIP_TILE,
+            alignVertical: Mesh.BOTTOM,
+            alignHorizontal: Mesh.CENTER,
+            width: this.wallThickness,
+            height: this.wallHeight,
+            depth: this.groundDepth + this.wallThickness * 2,
+            tileSize: this.wallTileSize
+        };
 
         // POSITIVE X WALL
-        const xWall1 = MeshBuilder.CreateBox("xWall1", {
-            width: this.wallThickness,
-            depth: this.groundHeight + this.wallThickness * 2,
-            height: this.wallHeight
-        });
-        xWall1.position = xWall1.position.add(new Vector3(
+        const wall1 = MeshBuilder.CreateTiledBox("wall1", wallOptions, this.scene);
+        wall1.position = wall1.position.add(new Vector3(
             this.groundWidth / 2 + this.wallThickness / 2,
             this.wallHeight / 2,
-            0));
-        xWall1.checkCollisions = true;
-        xWall1.material = wallMat;
-        xWall1.receiveShadows = true;
-        this.shadowGenerator1.addShadowCaster(xWall1);
+            0
+        ));
+        wall1.checkCollisions = true;
+        wall1.material = wallMat;
+        wall1.receiveShadows = true;
+        this.shadowGenerator1.addShadowCaster(wall1);
 
         // NEGATIVE X WALL
-        const xWall2 = MeshBuilder.CreateBox("xWall2", {
-            width: this.wallThickness,
-            depth: this.groundHeight + this.wallThickness * 2,
-            height: this.wallHeight
-        });
-        xWall2.position = xWall2.position.add(new Vector3(
+        const wall2 = MeshBuilder.CreateTiledBox("wall2", wallOptions, this.scene);
+        wall2.position = wall2.position.add(new Vector3(
             -this.groundWidth / 2 - this.wallThickness / 2,
             this.wallHeight / 2,
-            0));
-        xWall2.checkCollisions = true;
-        xWall2.material = wallMat;
-        xWall2.receiveShadows = true;
-        this.shadowGenerator1.addShadowCaster(xWall2);
+            0
+        ));
+        wall2.checkCollisions = true;
+        wall2.material = wallMat;
+        wall2.receiveShadows = true;
+        this.shadowGenerator1.addShadowCaster(wall2);
+
+        // Convert wallOptions to be for the Z walls.
+        wallOptions["width"] = this.groundWidth;
+        wallOptions["depth"] = this.wallThickness;
 
         // POSITIVE Z WALL
-        const xWall3 = MeshBuilder.CreateBox("xWall3", {
-            width: this.wallThickness,
-            depth: this.groundWidth + this.wallThickness * 2,
-            height: this.wallHeight
-        });
-        xWall3.rotation.y = Math.PI / 2;
-        xWall3.position = xWall3.position.add(new Vector3(
+        const wall3 = MeshBuilder.CreateTiledBox("wall3", wallOptions, this.scene);
+        wall3.position = wall3.position.add(new Vector3(
             0,
             this.wallHeight / 2,
-            this.groundHeight / 2 + this.wallThickness / 2));
-        xWall3.checkCollisions = true;
-        xWall3.material = wallMat;
-        xWall3.receiveShadows = true;
-        this.shadowGenerator1.addShadowCaster(xWall3);
+            this.groundDepth / 2 + this.wallThickness / 2
+        ));
+        wall3.checkCollisions = true;
+        wall3.material = wallMat;
+        wall3.receiveShadows = true;
+        this.shadowGenerator1.addShadowCaster(wall3);
 
         // NEGATIVE Z WALL
-        const xWall4 = MeshBuilder.CreateBox("xWall4", {
-            width: this.wallThickness,
-            depth: this.groundWidth + this.wallThickness * 2,
-            height: this.wallHeight
-        });
-        xWall4.rotation.y = Math.PI / 2;
-        xWall4.position = xWall4.position.add(new Vector3(
+        const wall4 = MeshBuilder.CreateTiledBox("wall4", wallOptions, this.scene);
+        wall4.position = wall4.position.add(new Vector3(
             0,
             this.wallHeight / 2,
-            -this.groundHeight / 2 - this.wallThickness / 2));
-        xWall4.checkCollisions = true;
-        xWall4.material = wallMat;
-        xWall4.receiveShadows = true;
-        this.shadowGenerator1.addShadowCaster(xWall4);
+            -this.groundDepth / 2 - this.wallThickness / 2
+        ));
+        wall4.checkCollisions = true;
+        wall4.material = wallMat;
+        wall4.receiveShadows = true;
+        this.shadowGenerator1.addShadowCaster(wall4);
     }
 
     createBuildings()
@@ -323,15 +311,8 @@ class App
 
         const buildingMat = new StandardMaterial("buildingMat", this.scene);
 
-        const buildingTexture = new Texture("assets/textures/building.jpg", this.scene);
-        buildingTexture.uScale = this.buildingUScale;
-        buildingTexture.vScale = this.buildingVScale;
-        buildingMat.diffuseTexture = buildingTexture;
-
-        const buildingBumpTexture = new Texture("assets/textures/normals/building.png");
-        buildingBumpTexture.uScale = this.buildingUScale;
-        buildingBumpTexture.vScale = this.buildingVScale;
-        buildingMat.bumpTexture = buildingBumpTexture;
+        buildingMat.diffuseTexture = new Texture("assets/textures/building.jpg", this.scene);
+        buildingMat.bumpTexture = new Texture("assets/textures/normals/normalbuilding.png");
 
         for (let i = 0; i < numBuildings; ++i)
         {
@@ -343,16 +324,26 @@ class App
             const xMax = this.groundWidth / 2;
             const buildingX = Math.random() * (xMax - xMin) + xMin;
 
-            const zMin = this.groundHeight / -2;
-            const zMax = this.groundHeight / 2;
+            const zMin = this.groundDepth / -2;
+            const zMax = this.groundDepth / 2;
             const buildingZ = Math.random() * (zMax - zMin) + zMin;
 
             const buildingY = buildingHeight / 2;
 
-            const building = MeshBuilder.CreateBox("building " + i, {width: buildingWidth, depth: buildingDepth, height: buildingHeight});
+            const buildingOptions = {
+                sideOrientation: Mesh.DOUBLESIDE,
+                pattern: Mesh.FLIP_TILE,
+                alignVertical: Mesh.BOTTOM,
+                alignHorizontal: Mesh.CENTER,
+                width: buildingWidth,
+                height: buildingHeight,
+                depth: buildingDepth,
+                tileSize: this.buildingTileSize,
+            };
+
+            const building = MeshBuilder.CreateTiledBox("building " + i, buildingOptions, this.scene);
             building.position = new Vector3(buildingX, buildingY, buildingZ);
             building.checkCollisions = true;
-
             building.material = buildingMat;
         }
     }

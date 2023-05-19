@@ -373,9 +373,16 @@ class App
             };
             const orb = MeshBuilder.CreateIcoSphere("orb" + i, orbOptions, this.scene);
 
-            const orbX = 0;
+            const xMin = -this.groundWidth / 2;
+            const xMax = this.groundWidth / 2;
+            const orbX = Math.random() * (xMax - xMin) + xMin;
+
             const orbY = Math.random() * ((this.orbGroundOffset + this.orbFloatOffset) - this.orbGroundOffset) + this.orbGroundOffset;
-            const orbZ = 0;
+
+            const zMin = -this.groundDepth / 2;
+            const zMax = this.groundDepth / 2;
+            const orbZ = Math.random() * (zMax - zMin) + zMin;
+
             orb.position = new Vector3(orbX, orbY, orbZ);
 
             orb.metadata = { distance: 0.0 };

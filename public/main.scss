@@ -1,5 +1,5 @@
 $color1: black;
-$color2: red;
+$color2: #AB1B1B;
 
 *
 {
@@ -16,7 +16,7 @@ html, body
 
 body
 {
-    background-color: $color1;
+    background-color: $color2;
 }
 
 #game-canvas
@@ -44,11 +44,11 @@ body
         display: flex;
         justify-content: center;
         align-items: center;
-        border: 3px solid black;
+        border: 1px solid $color2;
 
         .background-square-content
         {
-            background-color: $color2;
+            background-color: $color1;
             width: 100%;
             height: 100%;
         }

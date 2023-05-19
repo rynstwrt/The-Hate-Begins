@@ -25,11 +25,13 @@ class App
     // Building constants
     readonly minNumBuildings = 3;
     readonly maxNumBuildings = 25;
-    readonly minBuildingWidth = 4;
-    readonly maxBuildingWidth = 10;
+    readonly minBuildingWidth = 10;
+    readonly maxBuildingWidth = 30;
     readonly minBuildingHeight = 7;
     readonly maxBuildingHeight = 30;
     readonly buildingTileSize = 3.5;
+    readonly buildingTextures = ["assets/textures/building.jpg", "assets/textures/building2.jpg", "assets/textures/building3.jpg"];
+    readonly buildingBumpMaps = ["assets/textures/normals/normalbuilding.png", "assets/textures/normals/normalbuilding2.png", "assets/textures/normals/normalbuilding3.png"];
 
     // Ground constants
     readonly groundWidth = 500;
@@ -38,7 +40,7 @@ class App
 
     // Wall constants
     readonly wallThickness = 3;
-    readonly wallHeight = 10;
+    readonly wallHeight = 20;
     readonly wallTileSize = 2.5
 
     // Class variables
@@ -98,21 +100,22 @@ class App
     setupLights()
     {
         // SPOTLIGHT
-        const spotlight1 = new SpotLight("spotlight1", new Vector3(-40, 40, -40), new Vector3(1, -1, 1), Math.PI / 1, 2, this.scene);
-        spotlight1.position = new Vector3(-40, 40, -40);
-        spotlight1.diffuse = Color3.Red();
-        spotlight1.intensity = 2;
+        // const spotlight1 = new SpotLight("spotlight1", new Vector3(-40, 40, -40), new Vector3(1, -1, 1), Math.PI / 1, 2, this.scene);
+        // spotlight1.position = new Vector3(-40, 40, -40);
+        // spotlight1.diffuse = Color3.Black();
+        // spotlight1.intensity = 2;
+        // spotlight1.intensity = 0;
 
-        this.shadowGenerator1 = new ShadowGenerator(1024, spotlight1);
-        this.shadowGenerator1.useBlurCloseExponentialShadowMap = true;
-        this.shadowGenerator1.blurBoxOffset = 4;
-        this.shadowGenerator1.enableSoftTransparentShadow = true;
-        this.shadowGenerator1.transparencyShadow = true;
+        // this.shadowGenerator1 = new ShadowGenerator(1024, spotlight1);
+        // this.shadowGenerator1.useBlurCloseExponentialShadowMap = true;
+        // this.shadowGenerator1.blurBoxOffset = 4;
+        // this.shadowGenerator1.enableSoftTransparentShadow = true;
+        // this.shadowGenerator1.transparencyShadow = true;
 
         // PLAYER POINT LIGHT
         const playerLight: PointLight = new PointLight("playerLight", Vector3.Zero(), this.scene);
-        playerLight.diffuse = new Color3(1, 0, 0);
-        // playerLight.intensity = 5;
+        playerLight.diffuse = new Color3(255, 0, 0);
+        playerLight.intensity = .25;
 
         this.shadowGenerator2 = new ShadowGenerator(1024, playerLight);
         this.shadowGenerator2.useBlurCloseExponentialShadowMap = true;
@@ -122,7 +125,7 @@ class App
 
         this.scene.registerBeforeRender(() =>
         {
-            playerLight.position = this.camera.position.add(new Vector3(0, 20, 0));
+            playerLight.position = this.camera.position.add(new Vector3(0, 1, 0));
         });
     }
 
@@ -201,15 +204,21 @@ class App
             }
         }
 
-        anime({
+        const timeline = anime.timeline({
             targets: ".background-square-content",
-            scale: [0, 1],
             loop: true,
-            direction: "alternate",
             easing: "easeInOutQuad",
+            direction: "alternate",
             delay: anime.stagger(100, {grid: [this.backgroundSquaresX, this.backgroundSquaresY], from: "center"}),
-            duration: 500
         });
+
+        timeline.add({
+            backgroundColor: "#AB1B1B",
+        });
+
+        timeline.add({
+            backgroundColor: "#000000"
+        }, "-=200");
     }
 
     createGround()
@@ -259,10 +268,6 @@ class App
             this.wallHeight / 2,
             0
         ));
-        wall1.checkCollisions = true;
-        wall1.material = wallMat;
-        wall1.receiveShadows = true;
-        this.shadowGenerator1.addShadowCaster(wall1);
 
         // NEGATIVE X WALL
         const wall2 = MeshBuilder.CreateTiledBox("wall2", wallOptions, this.scene);
@@ -271,10 +276,6 @@ class App
             this.wallHeight / 2,
             0
         ));
-        wall2.checkCollisions = true;
-        wall2.material = wallMat;
-        wall2.receiveShadows = true;
-        this.shadowGenerator1.addShadowCaster(wall2);
 
         // Convert wallOptions to be for the Z walls.
         wallOptions["width"] = this.groundWidth;
@@ -287,10 +288,6 @@ class App
             this.wallHeight / 2,
             this.groundDepth / 2 + this.wallThickness / 2
         ));
-        wall3.checkCollisions = true;
-        wall3.material = wallMat;
-        wall3.receiveShadows = true;
-        this.shadowGenerator1.addShadowCaster(wall3);
 
         // NEGATIVE Z WALL
         const wall4 = MeshBuilder.CreateTiledBox("wall4", wallOptions, this.scene);
@@ -299,20 +296,20 @@ class App
             this.wallHeight / 2,
             -this.groundDepth / 2 - this.wallThickness / 2
         ));
-        wall4.checkCollisions = true;
-        wall4.material = wallMat;
-        wall4.receiveShadows = true;
-        this.shadowGenerator1.addShadowCaster(wall4);
+
+        [wall1, wall2, wall3, wall4].forEach(wall =>
+        {
+            wall.checkCollisions = true;
+            wall.material = wallMat;
+            wall.receiveShadows = true;
+            // this.shadowGenerator1.addShadowCaster(wall);
+            this.shadowGenerator2.addShadowCaster(wall);
+        });
     }
 
     createBuildings()
     {
         const numBuildings = Math.random() * (this.maxNumBuildings - this.minNumBuildings) + this.maxNumBuildings;
-
-        const buildingMat = new StandardMaterial("buildingMat", this.scene);
-
-        buildingMat.diffuseTexture = new Texture("assets/textures/building.jpg", this.scene);
-        buildingMat.bumpTexture = new Texture("assets/textures/normals/normalbuilding.png");
 
         for (let i = 0; i < numBuildings; ++i)
         {
@@ -344,6 +341,13 @@ class App
             const building = MeshBuilder.CreateTiledBox("building " + i, buildingOptions, this.scene);
             building.position = new Vector3(buildingX, buildingY, buildingZ);
             building.checkCollisions = true;
+            building.receiveShadows = true;
+            this.shadowGenerator2.addShadowCaster(building);
+
+            const buildingMat = new StandardMaterial("buildingMat", this.scene);
+            const textureIndex = Math.floor(Math.random() * this.buildingTextures.length);
+            buildingMat.diffuseTexture = new Texture(this.buildingTextures[textureIndex], this.scene);
+            buildingMat.bumpTexture = new Texture(this.buildingBumpMaps[textureIndex], this.scene);
             building.material = buildingMat;
         }
     }

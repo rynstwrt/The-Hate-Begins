@@ -12,7 +12,9 @@ import {
     StandardMaterial,
     Color3,
     Texture,
-    ShadowGenerator, SpotLight, Vector4, VertexBuffer, Mesh
+    ShadowGenerator,
+    Animation,
+    Mesh, DeepImmutable, Scalar
 } from "@babylonjs/core";
 import anime from "animejs/lib/anime.es.js"
 
@@ -42,6 +44,14 @@ class App
     readonly wallThickness = 3;
     readonly wallHeight = 20;
     readonly wallTileSize = 2.5
+
+    // Orb constants
+    readonly numOrbs = 10;
+    readonly orbRadius = 0.5;
+    readonly orbGroundOffset = 1.5;
+    readonly orbFloatOffset = 0.3;
+    readonly orbFloatSpeed = 0.5;
+    readonly orbRotationSpeed = 0.01;
 
     // Class variables
     scene: Scene;
@@ -74,6 +84,7 @@ class App
         this.createGround();
         this.createWalls();
         this.createBuildings();
+        this.createOrbs();
 
         window.addEventListener("resize", () =>
         {
@@ -349,6 +360,32 @@ class App
             buildingMat.diffuseTexture = new Texture(this.buildingTextures[textureIndex], this.scene);
             buildingMat.bumpTexture = new Texture(this.buildingBumpMaps[textureIndex], this.scene);
             building.material = buildingMat;
+        }
+    }
+
+    createOrbs()
+    {
+        for (let i = 0; i < this.numOrbs; ++i)
+        {
+            const orbOptions = {
+                radius: this.orbRadius,
+                subdivisions: 1,
+            };
+            const orb = MeshBuilder.CreateIcoSphere("orb" + i, orbOptions, this.scene);
+
+            const orbX = 0;
+            const orbY = Math.random() * ((this.orbGroundOffset + this.orbFloatOffset) - this.orbGroundOffset) + this.orbGroundOffset;
+            const orbZ = 0;
+            orb.position = new Vector3(orbX, orbY, orbZ);
+
+            orb.metadata = { distance: 0.0 };
+
+            this.scene.onBeforeRenderObservable.add(() =>
+            {
+                orb.metadata.distance += this.engine.getDeltaTime() * 0.001 * this.orbFloatSpeed;
+                orb.position.y = Scalar.PingPong(orb.metadata.distance, this.orbFloatOffset) + this.orbGroundOffset;
+                orb.rotation.y += this.orbRotationSpeed;
+            });
         }
     }
 }
